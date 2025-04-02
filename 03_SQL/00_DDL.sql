@@ -1,0 +1,14 @@
+# 유저 생성
+CREATE USER 'BOOOMS'@'LOCALHOST' IDENTIFIED BY '1111';
+# 실행: CTRL + ENTER
+# SQL문 작성 시 절대 ';'로 종료.
+CREATE USER 'BOOOMS_REMOTE'@'%' IDENTIFIED BY '1111';
+
+# 생성된 계정 확인
+SELECT USER, HOST FROM MYSQL.USER;
+
+# 계정에 권한 부여
+# GRANT 부여할 권한 ON 대상 테이블 TO 권한 부여할 계정
+GRANT ALL PRIVILEGES ON *.* TO 'BOOOMS'@'LOCALHOST';
+GRANT ALL PRIVILEGES ON *.* TO 'BOOOMS_REMOTE';
+#                       *.* >> DB.TABLE
