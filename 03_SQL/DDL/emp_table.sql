@@ -1,13 +1,17 @@
+-- CREATE DATABASE HR;
+USE HR;
+
+
 DROP TABLE IF EXISTS emp;
 CREATE TABLE emp(
-    emp_id 		INT PRIMARY KEY,
-    emp_name 	VARCHAR(20) NOT NULL,
-    job 		VARCHAR(35) NOT NULL,
-    mgr_id 		INT,
-    hire_date 	DATE NOT NULL,
-    salary 		DECIMAL(7,2),    
-    comm_pct 	DECIMAL(2,2),
-    dept_name 	VARCHAR(30)
+    emp_id 		INT PRIMARY KEY,		-- 직번
+    emp_name 	VARCHAR(20) NOT NULL,	-- 이름
+    job 		VARCHAR(35) NOT NULL,	-- 직무
+    mgr_id 		INT,					-- 상사 직번
+    hire_date 	DATE NOT NULL,			-- 입사 날짜
+    salary 		DECIMAL(7,2),    		-- 급여
+    comm_pct 	DECIMAL(2,2),  			-- 커미션 비율
+    dept_name 	VARCHAR(30)				-- 부서 번호
 );
 
 
@@ -119,3 +123,7 @@ INSERT INTO emp (emp_id,emp_name,job,mgr_id,hire_date,salary,comm_pct,dept_name)
 INSERT INTO emp (emp_id,emp_name,job,mgr_id,hire_date,salary,comm_pct,dept_name) VALUES (205,'Shelley','AC_MGR',101,CAST('02-06-07' AS DATE),12008,null,'Accounting');
 INSERT INTO emp (emp_id,emp_name,job,mgr_id,hire_date,salary,comm_pct,dept_name) VALUES (206,'William','AC_ACCOUNT',205,CAST('02-06-07' AS DATE),8300,null,'Accounting');
 commit;
+
+DESC emp;
+
+SELECT * FROM EMP;
