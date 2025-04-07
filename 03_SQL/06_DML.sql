@@ -19,30 +19,45 @@ SET    변경할 컬럼 = 변경할 값  [, 변경할 컬럼 = 변경할 값]
  - SET: 변경할 컬럼과 값을 지정
  - WHERE: 변경할 행을 선택. 
 ************************************************************************ */
-
+use hr_join;
 -- 직원 ID가 200인 직원의 급여를 5000으로 변경
-
+select * from emp where emp_id = 200;
+update emp set salary = 5000 where emp_id = 200;
 
 -- 직원 ID가 200인 직원의 급여를 10% 인상한 값으로 변경.
-
+update emp set salary = 1.1 * salary where emp_id = 200;
 
 -- 부서 ID가 100인 직원의 커미션 비율을 null 로 변경.
-
+select * from emp where emp_id = 100;
+update emp set comm_pct = 0.2 where emp_id = 100;
+update emp set comm_pct = null where emp_id = 100;
 
 --  부서 ID가 100인 직원들의 급여를 100% 인상
+select * from emp where dept_id = 100;
 
+update emp
+set salary = salary * 2
+where dept_id = 100;
 
 
 -- 부서 ID가 100인 직원의 커미션 비율을 0.2로 salary는 3000을 더한 값으로, 상사_id는 100 변경.
-
+update emp
+set comm_pct = 0.2, salary = salary + 3000, mgr_id = 100
+where dept_id = 100;
 
 
 
 --  IT 부서의 직원들의 급여를 3배 인상
-
+select * from emp;
+update emp
+set salary = salary * 3
+where dept_id in (select dept_id from dept where dept_name = "IT");
 
 
 -- EMP 테이블의 모든 데이터를 MGR_ID는 NULL로 HIRE_DATE 는 현재일시로 COMM_PCT는 0.5로 수정.
+update emp
+set mgr_id = null, hire_date = curdate(), comm_pct = 0.5;
+
 
 /* *********************************************************************
 DELETE : 테이블의 행을 삭제
