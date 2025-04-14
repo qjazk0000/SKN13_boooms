@@ -92,8 +92,10 @@ for row in label_rows:
         continue
 
     # '합계'와 '연령불명'은 제외
-    if current_age_group not in ["합계", "연령불명"]:
-        age_measure_labels.append((current_age_group, measure))
+    # if current_age_group not in ["합계", "연령불명"]:
+    #     age_measure_labels.append((current_age_group, measure))
+    
+    age_measure_labels.append((current_age_group, measure))
 
 # 2. 사고유형 헤더 - 합계 컬럼은 없으므로, 오직 네 가지만 사용
 accident_type_headers = ["차대사람", "차대차", "차량단독", "철길건널목"]
@@ -123,7 +125,7 @@ for idx, row in enumerate(data_rows):
 
 # 4. DataFrame 생성 및 결과 확인
 df = pd.DataFrame(all_data)
-print(df.head(10))
+print(df.head(24))
 
 '''
 내가 DB에 우선적으로 넣어야할 데이터.
@@ -145,10 +147,176 @@ print(df.head(10))
     # 데이터 삽입 쿼리
 # insert_query = "INSERT INTO AgeGroup (ID, AGE_RANGE)) VALUES (%s, %s)"
 
-insert_sql = "INSERT INTO AgeGroup (ID, AGE_RANGE) VALUES (%s, %s)"
+# insert_sql = "INSERT INTO AgeGroup (ID, AGE_RANGE) VALUES (%s, %s)"
 
-with pymysql.connect(host="127.0.0.1", port=3306, user='root', password='1111', db='01_proj') as conn:
-    with conn.cursor() as cursor:
-        result = cursor.execute(insert_sql, [1, all_data[0]["연령대"]])
-        conn.commit()
-        print("처리 행수:", result)
+# with pymysql.connect(host="127.0.0.1", port=3306, user='root', password='1111', db='01_proj') as conn:
+#     with conn.cursor() as cursor:
+#         for i in range(0, int(len(all_data)/8)):
+#             result = cursor.execute(insert_sql, [i+1, all_data[i+12]["연령대"]])
+#             conn.commit()
+#             print("처리 행수:", result)
+
+#################################################################################################################################################
+# unique_age_groups = df["연령대"].unique()
+
+# MySQL 연결 정보
+conn = pymysql.connect(
+    host="127.0.0.1",
+    port=3306,
+    user="root",
+    password="1111",
+    db="01_proj",
+    charset="utf8mb4"
+)
+
+with conn.cursor() as cursor:
+    # AgeGroup 테이블에 연령대 데이터 삽입
+    age_groups = [
+        ("1", "20세이하"),
+        ("2", "21~30세"),
+        ("3", "31~40세"),
+        ("4", "41~50세"),
+        ("5", "51~60세"),
+        ("6", "61~64세"),
+        ("7", "65이상"),
+        ("8", "연령불명")
+    ]
+    # insert_age_sql = "INSERT INTO AgeGroup (id, age_range) VALUES (%s, %s)"
+    # for group in age_groups:
+    #     cursor.execute(insert_age_sql, group)
+
+    # # YearType 테이블에 2014년부터 2023년까지 데이터 삽입
+    # years = [str(year) for year in range(2014, 2024)]
+    # insert_year_sql = "INSERT INTO YearType (id) VALUES (%s)"
+    # for year in years:
+    #     cursor.execute(insert_year_sql, (year,))
+
+    # conn.commit()
+
+# conn.close()
+print("AgeGroup 및 YearType 테이블에 데이터 삽입 완료!")
+
+
+
+# 각 사고 유형을 그대로 삽입합니다.
+accident_types = ["사고유형", "차대차", "차대사람", "차량단독", "철길건널목"]
+
+# insert_sql = "INSERT INTO AccidentType (type_name) VALUES (%s)"
+
+# with conn.cursor() as cursor:
+#     for type_name in accident_types:
+#         cursor.execute(insert_sql, (type_name,))
+#     conn.commit()
+
+# conn.close()
+print("AccidentType 테이블에 사고 유형 데이터 삽입 완료!")
+
+##########################################################################################################################################
+
+
+
+df_filtered = df[df["사고유형"].isin(accident_type_headers)]
+
+# pivot_table: index = [연령대, 사고유형], columns = 지표, values = 건수
+pivot = df_filtered.pivot_table(
+    index=["연령대", "사고유형"],
+    columns="지표",
+    values="건수",
+    aggfunc="first"    # 각 조합당 값이 하나씩 있다고 가정
+).reset_index()
+
+# pivot 결과에는 "사고[건]", "사망[명]", "부상[명]" 컬럼이 생성됨.
+pivot.rename(columns={
+    "사고[건]": "accident_count",
+    "부상[명]": "injury_count",
+    "사망[명]": "death_count"
+}, inplace=True)
+
+# NaN 값은 0으로 치환하고 정수형으로 변환
+pivot = pivot.fillna(0)
+pivot["accident_count"] = pivot["accident_count"].astype(int)
+pivot["injury_count"] = pivot["injury_count"].astype(int)
+pivot["death_count"] = pivot["death_count"].astype(int)
+
+##############################################
+# 4. 추가 컬럼 생성 및 최종 DataFrame 구성
+##############################################
+# 연령대를 AgeGroup 테이블의 id와 매핑 (여기서는 예시 매핑)
+age_group_map = {
+    "20세이하": "1",
+    "21~30세": "2",
+    "31~40세": "3",
+    "41~50세": "4",
+    "51~60세": "5",
+    "61~64세": "6",
+    "65세이상": "7",
+    "연령불명": "8"
+}
+
+pivot["age_group_id"] = pivot["연령대"].map(lambda x: age_group_map.get(x.strip(), None))
+
+# 연도 데이터: 모두 "2023"
+pivot["year_type_id"] = "2023"
+
+# 고유 id 생성: "ASTAGE0001", "ASTAGE0002", ...
+pivot["id"] = [str(i+1) for i in range(len(pivot))]
+
+# 사고유형 컬럼명을 accident_type_name으로 재명명
+pivot.rename(columns={"사고유형": "accident_type_name"}, inplace=True)
+
+# 최종 DataFrame 선택
+final_df = pivot[[
+    "id",
+    "accident_type_name",
+    "age_group_id",
+    "year_type_id",
+    "accident_count",
+    "injury_count",
+    "death_count"
+]]
+
+final_df = final_df.fillna(0)
+final_df["accident_count"] = final_df["accident_count"].astype(int)
+final_df["injury_count"] = final_df["injury_count"].astype(int)
+final_df["death_count"] = final_df["death_count"].astype(int)
+
+# MySQL 연결 설정 (환경에 맞게 수정)
+conn = pymysql.connect(
+    host="127.0.0.1",
+    port=3306,
+    user="root",
+    password="1111",
+    db="01_proj",
+    charset="utf8mb4"
+)
+cursor = conn.cursor()
+
+# INSERT 쿼리 (AccidentStatsAge 테이블)
+insert_sql = """
+INSERT INTO AccidentStatsAge
+(id, accident_type_name, age_group_id, year_type_id, accident_count, injury_count, death_count)
+VALUES (%s, %s, %s, %s, %s, %s, %s)
+"""
+
+# print(final_df)
+
+# final_df의 각 행을 순회하며 데이터 삽입
+for index, row in final_df.iterrows():
+    print(row["id"], row["accident_type_name"], row["age_group_id"], row["year_type_id"], row["accident_count"], row["injury_count"], row["death_count"])
+
+    cursor.execute(insert_sql, (
+        row["id"],
+        row["accident_type_name"],
+        row["age_group_id"],
+        row["year_type_id"],
+        row["accident_count"],
+        row["injury_count"],
+        row["death_count"]
+    ))
+    break
+
+conn.commit()
+cursor.close()
+conn.close()
+
+print("AccidentStatsAge 테이블에 데이터가 성공적으로 삽입되었습니다.")
