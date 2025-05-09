@@ -70,17 +70,33 @@ DELETE : 테이블의 행을 삭제
 
 
 -- 부서테이블에서 부서_ID가 200인 부서 삭제
+select * from dept where dept_id=200;
 
+delete from dept where dept_id=200;
 
 -- 부서테이블에서 부서_ID가 10인 부서 삭제
+select * from dept where dept_id = 10;
+
+delete from dept where dept_id = 10;
+
+select count(*) from emp;
+select * from emp where job_id = 'IT_PROG';
+
+delete from job where job_id = 'IT_PROG';
 
 
 -- 부서 ID가 없는 직원들을 삭제
+select * from emp where dept_id is null;
 
+delete from emp where dept_id is null;
 
 -- 담당 업무(emp.job_id)가 'SA_MAN'이고 급여(emp.salary) 가 12000 미만인 직원들을 삭제.
-
+delete from emp where job_id = 'SA_MAN' and salary < 12000;
 
 -- comm_pct 가 null이고 job_id 가 IT_PROG인 직원들을 삭제
+delete from emp where comm_pct is null and job_id = 'IT_PROG';
+
+delete from emp;
+
 
 

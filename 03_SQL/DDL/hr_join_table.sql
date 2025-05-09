@@ -230,3 +230,6 @@ COMMIT;
 show databases;
 use hr_join;
 show tables;
+
+
+select * from grade;
