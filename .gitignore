@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# additional directories and files
+saved_models/
+ko_new.txt
+data/
